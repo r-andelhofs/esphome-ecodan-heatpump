@@ -86,8 +86,6 @@ sensor:
       name: Output power
     zone1_room_temperature:
       name: Room 1 temperature
-    zone2_room_temperature:
-      name: Room 2 temperature
     gas_return_temp_signed:
       name: Gas return temperature
     outside_temperature:
