@@ -29,11 +29,6 @@ CONFIG_SCHEMA = cv.Schema(
                 cv.GenerateID(): cv.declare_id(text_sensor.TextSensor),
             }
         ),
-        cv.Optional("operating_mode"): text_sensor.TEXT_SENSOR_SCHEMA.extend(
-            {
-                cv.GenerateID(): cv.declare_id(text_sensor.TextSensor),
-            }
-        ),
         cv.Optional("heat_cool"): text_sensor.TEXT_SENSOR_SCHEMA.extend(
             {
                 cv.GenerateID(): cv.declare_id(text_sensor.TextSensor),
