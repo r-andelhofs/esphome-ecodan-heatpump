@@ -3,6 +3,9 @@ This is a set of components to read out and control Mitsubishi Ecodan heatpumps.
 
 It is highly inspired by https://github.com/BartGijsbers/CN105Gateway.
 
+# Caution
+The main branch of this component is kept for compatibility reasons, new development is taking place in the branch [future-climate-2zone](https://github.com/tobias-93/esphome-ecodan-heatpump/tree/future-climate-2zone). For new installations please use the new branch, and once it has been tested (and any feedback has been processed) I will deprecate the old one and set the new implementation as main.
+
 ## Table of Contents
 - [Hardware](#hardware)
 - [Installing](#installing)
