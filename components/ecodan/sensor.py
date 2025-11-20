@@ -101,6 +101,10 @@ CONFIG_SCHEMA = cv.Schema(
             icon="mdi:waves-arrow-right",
             state_class=STATE_CLASS_MEASUREMENT,
         ),
+        cv.Optional("operating_mode"): sensor.sensor_schema(
+            icon="mdi:numeric",
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
         cv.Optional("energy_cons_yesterday"): sensor.sensor_schema(
             unit_of_measurement=UNIT_KILOWATT_HOURS,
             icon="mdi:transmission-tower-export",

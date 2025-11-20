@@ -58,8 +58,6 @@ text_sensor:
       name: Defrost
     heating_stage:
       name: Heating stage
-    operating_mode:
-      name: Operating mode
     heat_cool:
       name: Heating/cooling
     hot_water_timer:
@@ -67,7 +65,7 @@ text_sensor:
     date_energy_cons:
       name: Date energy consumption
     date_energy_prod:
-      name: Date energy production      
+      name: Date energy production
     holiday_mode:
       name: Holiday mode
 
@@ -114,6 +112,8 @@ sensor:
       name: Hot water energy production (yesterday)
     energy_consumed_increasing:
       name: Total energy consumed
+    operating_mode:
+      name: Operating mode
 
 switch:
   - platform: ecodan

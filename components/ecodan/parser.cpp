@@ -38,8 +38,15 @@ static float parse2ByteHexValue(uint8_t *packet, uint8_t index) {
   return (float) (packet[index] * 256 + packet[index + 1]);
 }
 
+static float parseOperatingMode(uint8_t *packet, uint8_t index) {
+  return (float) packet[index];
+}
+
 float parsePacketNumberItem(uint8_t *packet, varTypeEnum varType, uint8_t index) {
   switch (varType) {
+  case VarType_OPERATING_MODE:
+    return parseOperatingMode(packet, index);
+    break;
   case VarType_TEMPERATURE:
     return parseTemperature(packet, index);
     break;
@@ -85,31 +92,6 @@ static string parseTimeDate(uint8_t *packet, uint8_t index) {
   sprintf(textStr, "20%d/%02d/%02d %02d:%02d:%02d", packet[index],
         packet[index + 1], packet[index + 2], packet[index + 3], packet[index + 4], packet[index + 5]);
   return textStr;
-}
-
-static string parseOperatingMode(uint8_t *packet, uint8_t index) {
-  switch (packet[index]) {
-  case 0:
-    return "Stop";
-  case 1:
-    return "Hot Water";
-  case 2:
-    return "Heating";
-  case 3:
-    return "Cooling";
-  case 4:
-    return "No voltage contact input (HW)";
-  case 5:
-    return "Freeze Stat";
-  case 6:
-    return "Legionella";
-  case 7:
-    return "Heating Eco";
-  case 8:
-    return "Mode 1";
-  default:
-    return unknownValue(packet[index]);
-  }
 }
 
 static string parseHotWaterMode(uint8_t *packet, uint8_t index) {
@@ -202,8 +184,6 @@ string parsePacketTextItem(uint8_t *packet, varTypeEnum varType, uint8_t index) 
   switch (varType) {
   case VarType_TIME_DATE:
     return parseTimeDate(packet, index);
-  case VarType_OPERATING_MODE:
-    return parseOperatingMode(packet, index);
   case VarType_HW_MODE:
     return parseHotWaterMode(packet, index);
   case VarType_MODE_SETTING:
