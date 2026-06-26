@@ -143,19 +143,19 @@ void EcodanClimate::setup() {
 
 climate::ClimateTraits EcodanClimate::traits() {
   auto traits = climate::ClimateTraits();
-  traits.set_supports_current_temperature(true);
-  traits.set_supports_two_point_target_temperature(false);
+  // ESPHome >=2025.x: support flags moved from set_supports_* setters to
+  // add_feature_flags(); two-point target temperature stays off (flag not added).
+  traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
+  traits.add_feature_flags(climate::CLIMATE_SUPPORTS_ACTION);
   traits.set_visual_min_temperature(this->min_temperature_);
   traits.set_visual_max_temperature(this->max_temperature_);
   traits.set_visual_target_temperature_step(this->temperature_step_);
   traits.set_visual_current_temperature_step(0.1f);
-  
+
   traits.set_supported_modes({
     climate::CLIMATE_MODE_HEAT
   });
-  
-  traits.set_supports_action(true);
-  
+
   return traits;
 }
 
