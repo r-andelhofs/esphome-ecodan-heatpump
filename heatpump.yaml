@@ -116,8 +116,10 @@ sensor:
       id: energy_prod_yesterday
     energy_cooling_cons_yesterday:
       name: Cooling energy consumption (yesterday)
+      id: energy_cooling_cons_yesterday
     energy_cooling_prod_yesterday:
       name: Cooling energy production (yesterday)
+      id: energy_cooling_prod_yesterday
     energy_dhw_cons_yesterday:
       name: Hot water energy consumption (yesterday)
       id: energy_dhw_cons_yesterday
@@ -157,12 +159,27 @@ sensor:
     accuracy_decimals: 2
 
   - platform: template
+    name: "Cooling CoP (yesterday)"
+    id: cooling_cop_yesterday
+    lambda: |-
+      float prod = id(energy_cooling_prod_yesterday).state;
+      float cons = id(energy_cooling_cons_yesterday).state;
+      if (!std::isfinite(prod) || !std::isfinite(cons) || cons <= 0.0) {
+        return NAN;
+      }
+      return prod / cons;
+    state_class: measurement
+    accuracy_decimals: 2
+
+  - platform: template
     name: "Total CoP (yesterday)"
     id: total_cop_yesterday
     lambda: |-
       float prod_heat = id(energy_prod_yesterday).state;
+      float prod_cool = id(energy_cooling_prod_yesterday).state;
       float prod_dhw  = id(energy_dhw_prod_yesterday).state;
       float cons_heat = id(energy_cons_yesterday).state;
+      float cons_cool = id(energy_cooling_cons_yesterday).state;
       float cons_dhw  = id(energy_dhw_cons_yesterday).state;
       // Only include subsystems that have a finite, positive consumption
       float total_prod = 0.0;
@@ -171,6 +188,10 @@ sensor:
       if (std::isfinite(cons_heat) && cons_heat > 0.1 && std::isfinite(prod_heat) && prod_heat > 0.1) {
         total_prod += prod_heat;
         total_cons += cons_heat;
+      }
+      if (std::isfinite(cons_cool) && cons_cool > 0.1 && std::isfinite(prod_cool) && prod_cool > 0.1) {
+        total_prod += prod_cool;
+        total_cons += cons_cool;
       }
       if (std::isfinite(cons_dhw) && cons_dhw > 0.1 && std::isfinite(prod_dhw) && prod_dhw > 0.1) {
         total_prod += prod_dhw;

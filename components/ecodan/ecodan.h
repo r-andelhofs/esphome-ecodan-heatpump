@@ -127,18 +127,28 @@ class EcodanClimate: public climate::Climate, public Component {
     
     // Called when current temperature is updated from sensor data
     void update_current_temperature(float temperature);
-    
+
     // Called when target temperature is updated from heat pump data
     void update_target_temperature(float temperature);
+
+    // Whether this zone is currently actively heating/cooling (from zone activity status)
+    void set_running(bool running);
+    // Whether this zone is in cooling mode (vs heating), from per-zone operating mode
+    void set_cooling(bool cooling);
 
   protected:
     void control(const climate::ClimateCall &call) override;
     climate::ClimateTraits traits() override;
 
+    // Recompute mode (heat/cool) and action (heating/cooling/idle) from is_cooling_/is_running_
+    void refresh_mode_action();
+
     uint8_t zone_ = 1;
     float min_temperature_ = 10.0f;
     float max_temperature_ = 30.0f;
     float temperature_step_ = 0.5f;
+    bool is_cooling_ = false;
+    bool is_running_ = false;
     EcodanHeatpump* heatpump_ = nullptr;
 };
 

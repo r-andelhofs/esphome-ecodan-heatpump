@@ -137,8 +137,9 @@ void EcodanClimate::dump_config() {
 
 void EcodanClimate::setup() {
   this->target_temperature = NAN;
+  // Sensible defaults; corrected on the first read of operating mode + zone activity.
   this->mode = climate::CLIMATE_MODE_HEAT;
-  this->action = climate::CLIMATE_ACTION_HEATING;
+  this->action = climate::CLIMATE_ACTION_IDLE;
 }
 
 climate::ClimateTraits EcodanClimate::traits() {
@@ -152,8 +153,11 @@ climate::ClimateTraits EcodanClimate::traits() {
   traits.set_visual_target_temperature_step(this->temperature_step_);
   traits.set_visual_current_temperature_step(0.1f);
 
+  // The heat pump itself decides heat vs cool (via mode_select); the climate
+  // entity reflects both so HA shows the correct mode while cooling.
   traits.set_supported_modes({
-    climate::CLIMATE_MODE_HEAT
+    climate::CLIMATE_MODE_HEAT,
+    climate::CLIMATE_MODE_COOL
   });
 
   return traits;
@@ -213,10 +217,7 @@ void EcodanClimate::control(const climate::ClimateCall &call) {
   }
 
   if (state_changed) {
-    // Ensure mode is always set correctly for heat pump
-    // (Action will be set by zone activity status)
-    this->mode = climate::CLIMATE_MODE_HEAT;
-    
+    // mode/action are driven by the heat pump (set_cooling/set_running); just publish.
     this->publish_state();
   }
 }
@@ -224,27 +225,37 @@ void EcodanClimate::control(const climate::ClimateCall &call) {
 void EcodanClimate::update_current_temperature(float temperature) {
   if (this->current_temperature != temperature) {
     this->current_temperature = temperature;
-    
-    // Ensure mode is always set correctly for heat pump
-    // (Action will be set by zone activity status)
-    this->mode = climate::CLIMATE_MODE_HEAT;
-    
     this->publish_state();
   }
 }
 
 void EcodanClimate::update_target_temperature(float temperature) {
   bool first_update = std::isnan(this->target_temperature);
-  
+
   if (!std::isnan(temperature) && (first_update || std::abs(this->target_temperature - temperature) > 0.01f)) {
     this->target_temperature = temperature;
-    
-    // Ensure mode is always set correctly for heat pump
-    // (Action will be set by zone activity status)
-    this->mode = climate::CLIMATE_MODE_HEAT;
-    
     this->publish_state();
   }
+}
+
+void EcodanClimate::refresh_mode_action() {
+  this->mode = this->is_cooling_ ? climate::CLIMATE_MODE_COOL : climate::CLIMATE_MODE_HEAT;
+  if (this->is_running_) {
+    this->action = this->is_cooling_ ? climate::CLIMATE_ACTION_COOLING : climate::CLIMATE_ACTION_HEATING;
+  } else {
+    this->action = climate::CLIMATE_ACTION_IDLE;
+  }
+  this->publish_state();
+}
+
+void EcodanClimate::set_running(bool running) {
+  this->is_running_ = running;
+  this->refresh_mode_action();
+}
+
+void EcodanClimate::set_cooling(bool cooling) {
+  this->is_cooling_ = cooling;
+  this->refresh_mode_action();
 }
 
 EcodanHeatpump::EcodanHeatpump (uart::UARTComponent *parent) : uart::UARTDevice(parent) {}
@@ -259,14 +270,15 @@ void EcodanHeatpump::setup() {
   pending_operation_.is_pending = false;
   operation_in_progress_ = false;
   
-  // Initialize climate entities with correct mode and action
+  // Initialize climate entities to a safe default; real mode/action are set
+  // once the first operating-mode (0x26) and zone-activity (0x03) reads arrive.
   if (climate_zone1_ != nullptr) {
     climate_zone1_->mode = climate::CLIMATE_MODE_HEAT;
-    climate_zone1_->action = climate::CLIMATE_ACTION_HEATING;
+    climate_zone1_->action = climate::CLIMATE_ACTION_IDLE;
   }
   if (climate_zone2_ != nullptr) {
     climate_zone2_->mode = climate::CLIMATE_MODE_HEAT;
-    climate_zone2_->action = climate::CLIMATE_ACTION_HEATING;
+    climate_zone2_->action = climate::CLIMATE_ACTION_IDLE;
   }
 }
 
@@ -425,40 +437,30 @@ void EcodanHeatpump::parsePacket(uint8_t *packet) {
 #define ECODAN_PUBLISH_NUMBER(p_nb) ECODAN_PUBLISH_ENTITY(p_nb, nb, parsePacketNumberItem)
   ECODAN_NUMBER_LIST(ECODAN_PUBLISH_NUMBER, )
 
-  // Update climate actions based on zone activity status
+  // Update per-zone heat/cool mode from the operating mode register (0x26).
+  // mode_select values: 0-2 = heating variants, 3-4 = cooling variants.
+  if (field_mode_select_zone1::address == packet[5] && 0x62 == packet[1]) {
+    if (this->climate_zone1_ != nullptr) {
+      this->climate_zone1_->set_cooling(packet[field_mode_select_zone1::varIndex] >= 3);
+    }
+    if (this->climate_zone2_ != nullptr) {
+      this->climate_zone2_->set_cooling(packet[field_mode_select_zone2::varIndex] >= 3);
+    }
+  }
+
+  // Update climate running state (action) based on zone activity status.
+  // The byte is mode-agnostic: it reports which zones are RUNNING, not heat vs cool.
   if (field_zone_activity_status::address == packet[5] && 0x62 == packet[1]) {
     uint8_t zone_activity = parsePacketNumberItem(packet, field_zone_activity_status::varType, field_zone_activity_status::varIndex);
     ESP_LOGD(TAG, "Zone activity status: %d", zone_activity);
-    
+
     // Zone activity status mapping (protocol):
-    // 0 = No zones active
-    // 2 = Zone 1 active
-    // 3 = Zone 2 active
-    // 1 = Both zones active
+    // 0 = No zones working, 2 = Zone 1 working, 3 = Zone 2 working, 1 = Both zones working
     if (this->climate_zone1_ != nullptr) {
-      if (zone_activity == 2 || zone_activity == 1) {
-        // Zone 1 is active
-        this->climate_zone1_->mode = climate::CLIMATE_MODE_HEAT;
-        this->climate_zone1_->action = climate::CLIMATE_ACTION_HEATING;
-      } else {
-        // Zone 1 is idle
-        this->climate_zone1_->mode = climate::CLIMATE_MODE_HEAT;
-        this->climate_zone1_->action = climate::CLIMATE_ACTION_IDLE;
-      }
-      this->climate_zone1_->publish_state();
+      this->climate_zone1_->set_running(zone_activity == 2 || zone_activity == 1);
     }
-    
     if (this->climate_zone2_ != nullptr) {
-      if (zone_activity == 3 || zone_activity == 1) {
-        // Zone 2 is active
-        this->climate_zone2_->mode = climate::CLIMATE_MODE_HEAT;
-        this->climate_zone2_->action = climate::CLIMATE_ACTION_HEATING;
-      } else {
-        // Zone 2 is idle
-        this->climate_zone2_->mode = climate::CLIMATE_MODE_HEAT;
-        this->climate_zone2_->action = climate::CLIMATE_ACTION_IDLE;
-      }
-      this->climate_zone2_->publish_state();
+      this->climate_zone2_->set_running(zone_activity == 3 || zone_activity == 1);
     }
   }
 
@@ -683,9 +685,10 @@ void EcodanHeatpump::buildEntityList() {
     addEntityIfNotPresent(field_zone2_room_temperature::address, "climate", "Zone 2 temperature reading for climate");
   }
   
-  // Always add zone activity status for climate actions (if any climate entities are configured)
+  // Always add zone activity status (action) and operating mode (heat/cool) for climate
   if (this->climate_zone1_ != nullptr || this->climate_zone2_ != nullptr) {
     addEntityIfNotPresent(field_zone_activity_status::address, "climate", "zone activity status reading for climate actions");
+    addEntityIfNotPresent(field_mode_select_zone1::address, "climate", "operating mode reading for climate heat/cool");
   }
   
   ESP_LOGI(TAG, "Built entity list with %d unique addresses", entity_list_.size());
