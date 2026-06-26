@@ -25,6 +25,26 @@ CONFIG_SCHEMA = cv.Schema(
             EcodanSwitch,
             icon="mdi:beach"
         ),
+        cv.Optional("prohibit_dhw"): switch.switch_schema(
+            EcodanSwitch,
+            icon="mdi:water-off"
+        ),
+        cv.Optional("prohibit_heating_zone1"): switch.switch_schema(
+            EcodanSwitch,
+            icon="mdi:radiator-off"
+        ),
+        cv.Optional("prohibit_cooling_zone1"): switch.switch_schema(
+            EcodanSwitch,
+            icon="mdi:snowflake-off"
+        ),
+        cv.Optional("prohibit_heating_zone2"): switch.switch_schema(
+            EcodanSwitch,
+            icon="mdi:radiator-off"
+        ),
+        cv.Optional("prohibit_cooling_zone2"): switch.switch_schema(
+            EcodanSwitch,
+            icon="mdi:snowflake-off"
+        ),
     }
 ).extend(cv.COMPONENT_SCHEMA)
 

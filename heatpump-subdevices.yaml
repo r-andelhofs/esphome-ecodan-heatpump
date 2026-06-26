@@ -1,0 +1,296 @@
+external_components:
+  - source: github://tobias-93/esphome-ecodan-heatpump@future-climate-2zone
+    components: [ ecodan ]
+
+logger:
+  baud_rate: 0
+
+api:
+
+ota:
+
+wifi:
+# remove leading '#' and fill in your wifi details
+#  ssid: !secret wifi_ssid
+#  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${friendlyName} Fallback Hotspot"
+
+captive_portal:
+
+# Enable Web server.
+web_server:
+  port: 80
+
+# Sync time with Home Assistant.
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+uart:
+  id: ecodan_uart
+  baud_rate: 2400
+  tx_pin: GPIO1
+  rx_pin: GPIO3
+  rx_buffer_size: 1024
+  parity: EVEN
+
+ecodan:
+  id: ecodan_instance
+  uart_id: ecodan_uart
+
+# ESPHome core configuration with subdevices
+esphome:
+  name: ${name}
+  friendly_name: ${friendlyName}
+  area: "Utility Room"  # Area for the main heat pump controller
+  
+  # Define subdevices for better organization in Home Assistant
+  devices:
+    - id: zone1_device
+      name: "Zone 1 Heating"
+      area_id: zone1_area
+    - id: zone2_device
+      name: "Zone 2 Heating"
+      area_id: zone2_area
+    - id: hotwater_device
+      name: "Hot Water System"
+      area_id: utility_area
+  
+  # Define areas for the subdevices
+  areas:
+    - id: zone1_area
+      name: "Zone 1"
+    - id: zone2_area
+      name: "Zone 2"
+    - id: utility_area
+      name: "Utility Room"
+
+text_sensor:
+  - platform: version
+    name: ESPHome Version
+  - platform: wifi_info
+    ip_address:
+      name: IP
+    ssid:
+      name: SSID
+    bssid:
+      name: BSSID
+  
+  # Heat pump general status sensors
+  - platform: ecodan
+    date_time:
+      name: Current date/time
+    defrost:
+      name: Defrost
+    heating_stage:
+      name: Heating stage
+    operating_mode:
+      name: Operating mode
+    heat_cool:
+      name: Heating/cooling
+    date_energy_cons:
+      name: Date energy consumption
+    date_energy_prod:
+      name: Date energy production      
+    holiday_mode:
+      name: Holiday mode
+  
+  # Hot water specific text sensors
+  - platform: ecodan
+    hot_water_timer:
+      name: Hot water timer
+      device_id: hotwater_device
+
+sensor:
+  - platform: uptime
+    name: Uptime
+  - platform: wifi_signal
+    name: WiFi Signal
+    update_interval: 60s
+  
+  # Heat pump general sensors
+  - platform: ecodan
+    error_code:
+      name: Error code
+    frequency:
+      name: Frequency
+    output_power:
+      name: Output power
+    gas_return_temp_signed:
+      name: Gas return temperature
+    outside_temperature:
+      name: Outside temperature
+    water_feed_temp_signed:
+      name: Water feed temperature
+    water_return_temp_signed:
+      name: Water return temperature
+    runtime:
+      name: Runtime
+    water_flow:
+      name: Water flow
+    energy_consumed_increasing:
+      name: Total energy consumed
+    energy_cons_yesterday:
+      name: Heating energy consumption (yesterday)
+      id: energy_cons_yesterday
+    energy_prod_yesterday:
+      name: Heating energy production (yesterday)
+      id: energy_prod_yesterday
+    energy_cooling_cons_yesterday:
+      name: Cooling energy consumption (yesterday)
+    energy_cooling_prod_yesterday:
+      name: Cooling energy production (yesterday)
+  
+  # Zone 1 specific sensors
+  - platform: ecodan
+    zone1_room_temperature:
+      name: Room temperature
+      device_id: zone1_device
+  
+  # Zone 2 specific sensors
+  - platform: ecodan
+    zone2_room_temperature:
+      name: Room temperature
+      device_id: zone2_device
+  
+  # Hot water specific sensors
+  - platform: ecodan
+    hot_water_temperature:
+      name: Hot water temperature
+      device_id: hotwater_device
+    legionella_temp_setpoint:
+      name: Legionella temperature setpoint
+      device_id: hotwater_device
+    energy_dhw_cons_yesterday:
+      name: Hot water energy consumption (yesterday)
+      id: energy_dhw_cons_yesterday
+      device_id: hotwater_device
+    energy_dhw_prod_yesterday:
+      name: Hot water energy production (yesterday)
+      id: energy_dhw_prod_yesterday
+      device_id: hotwater_device
+
+  # Calculated CoP (yesterday) as ratio of production/consumption
+  - platform: template
+    name: "CoP (yesterday)"
+    id: cop_yesterday
+    lambda: |-
+      float prod = id(energy_prod_yesterday).state;
+      float cons = id(energy_cons_yesterday).state;
+      if (!std::isfinite(prod) || !std::isfinite(cons) || cons <= 0.0) {
+        return NAN;
+      }
+      return prod / cons;
+    state_class: measurement
+    accuracy_decimals: 2
+
+  - platform: template
+    name: "DHW CoP (yesterday)"
+    device_id: hotwater_device
+    id: dhw_cop_yesterday
+    lambda: |-
+      float prod = id(energy_dhw_prod_yesterday).state;
+      float cons = id(energy_dhw_cons_yesterday).state;
+      if (!std::isfinite(prod) || !std::isfinite(cons) || cons <= 0.0) {
+        return NAN;
+      }
+      return prod / cons;
+    state_class: measurement
+    accuracy_decimals: 2
+
+  - platform: template
+    name: "Total CoP (yesterday)"
+    id: total_cop_yesterday
+    lambda: |-
+      float prod_heat = id(energy_prod_yesterday).state;
+      float prod_dhw  = id(energy_dhw_prod_yesterday).state;
+      float cons_heat = id(energy_cons_yesterday).state;
+      float cons_dhw  = id(energy_dhw_cons_yesterday).state;
+      // Only include subsystems that have a finite, positive consumption
+      float total_prod = 0.0;
+      float total_cons = 0.0;
+
+      if (std::isfinite(cons_heat) && cons_heat > 0.1 && std::isfinite(prod_heat) && prod_heat > 0.1) {
+        total_prod += prod_heat;
+        total_cons += cons_heat;
+      }
+      if (std::isfinite(cons_dhw) && cons_dhw > 0.1 && std::isfinite(prod_dhw) && prod_dhw > 0.1) {
+        total_prod += prod_dhw;
+        total_cons += cons_dhw;
+      }
+
+      if (total_cons <= 0.0) return NAN;
+      return total_prod / total_cons;
+    state_class: measurement
+    accuracy_decimals: 2
+
+switch:
+  # Heat pump general switches
+  - platform: ecodan
+    power_state:
+      name: Power state
+    holiday_mode:
+      name: Holiday Mode
+  
+  # Hot water specific switches
+  - platform: ecodan
+    force_dhw:
+      name: Force DHW
+      device_id: hotwater_device
+
+select:
+  # Heat pump general selects
+  - platform: ecodan
+    # Legacy single key (maps to zone1). Prefer using zone specific keys below.
+    # mode_select:
+    #   name: Mode
+    mode_select_zone1:
+      name: Mode Zone 1
+      device_id: zone1_device
+    mode_select_zone2:
+      name: Mode Zone 2
+      device_id: zone2_device
+
+  # Hot water specific selects
+  - platform: ecodan
+    hot_water_mode:
+      name: Hot water mode
+      device_id: hotwater_device
+
+number:
+  # Zone 1 specific numbers
+  - platform: ecodan
+    zone1_flow_temp_setpoint:
+      name: Flow temperature setpoint
+      device_id: zone1_device
+    # zone1_room_temp_setpoint:
+    #   name: Room temperature setpoint
+    #   device_id: zone1_device
+  
+  # Zone 2 specific numbers
+  - platform: ecodan
+    zone2_flow_temp_setpoint:
+      name: Flow temperature setpoint
+      device_id: zone2_device
+    # zone2_room_temp_setpoint:
+    #   name: Room temperature setpoint
+    #   device_id: zone2_device
+  
+  # Hot water specific numbers
+  - platform: ecodan
+    hot_water_setpoint:
+      name: Hot water setpoint
+      device_id: hotwater_device
+
+# Climate entities for zone temperature control (alternative to number entities above)
+climate:
+  - platform: ecodan
+    zone1:
+      name: "Zone 1 Thermostat"
+      device_id: zone1_device
+    zone2:
+      name: "Zone 2 Thermostat"
+      device_id: zone2_device

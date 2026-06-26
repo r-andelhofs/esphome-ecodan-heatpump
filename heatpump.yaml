@@ -1,5 +1,5 @@
 external_components:
-  - source: github://r-andelhofs/esphome-ecodan-heatpump@main
+  - source: github://r-andelhofs/esphome-ecodan-heatpump@feat/multi-zone
     components: [ ecodan ]
 
 logger:
@@ -83,7 +83,9 @@ sensor:
     output_power:
       name: Output power
     zone1_room_temperature:
-      name: Room 1 temperature
+      name: Zone 1 Room temperature
+    zone2_room_temperature:
+      name: Zone 2 Room temperature
     gas_return_temp_signed:
       name: Gas return temperature
     outside_temperature:
@@ -94,26 +96,91 @@ sensor:
       name: Water return temperature
     hot_water_temperature:
       name: Hot water temperature
+    legionella_temp_setpoint:
+      name: Legionella temperature setpoint
+    hot_water_temp_range_max:
+      name: Hot water temperature range (max)
+    hot_water_temp_range_min:
+      name: Hot water temperature range (min)
+    zone_activity_status:
+      name: Zone activity status
     runtime:
       name: Runtime
     water_flow:
       name: Water flow
     energy_cons_yesterday:
       name: Heating energy consumption (yesterday)
+      id: energy_cons_yesterday
     energy_prod_yesterday:
       name: Heating energy production (yesterday)
+      id: energy_prod_yesterday
     energy_cooling_cons_yesterday:
       name: Cooling energy consumption (yesterday)
     energy_cooling_prod_yesterday:
       name: Cooling energy production (yesterday)
     energy_dhw_cons_yesterday:
       name: Hot water energy consumption (yesterday)
+      id: energy_dhw_cons_yesterday
     energy_dhw_prod_yesterday:
       name: Hot water energy production (yesterday)
+      id: energy_dhw_prod_yesterday
     energy_consumed_increasing:
       name: Total energy consumed
     operating_mode:
       name: Operating mode
+
+  # Calculated CoP (yesterday) as ratio of production/consumption
+  - platform: template
+    name: "CoP (yesterday)"
+    id: cop_yesterday
+    lambda: |-
+      float prod = id(energy_prod_yesterday).state;
+      float cons = id(energy_cons_yesterday).state;
+      if (!std::isfinite(prod) || !std::isfinite(cons) || cons <= 0.0) {
+        return NAN;
+      }
+      return prod / cons;
+    state_class: measurement
+    accuracy_decimals: 2
+
+  - platform: template
+    name: "DHW CoP (yesterday)"
+    id: dhw_cop_yesterday
+    lambda: |-
+      float prod = id(energy_dhw_prod_yesterday).state;
+      float cons = id(energy_dhw_cons_yesterday).state;
+      if (!std::isfinite(prod) || !std::isfinite(cons) || cons <= 0.0) {
+        return NAN;
+      }
+      return prod / cons;
+    state_class: measurement
+    accuracy_decimals: 2
+
+  - platform: template
+    name: "Total CoP (yesterday)"
+    id: total_cop_yesterday
+    lambda: |-
+      float prod_heat = id(energy_prod_yesterday).state;
+      float prod_dhw  = id(energy_dhw_prod_yesterday).state;
+      float cons_heat = id(energy_cons_yesterday).state;
+      float cons_dhw  = id(energy_dhw_cons_yesterday).state;
+      // Only include subsystems that have a finite, positive consumption
+      float total_prod = 0.0;
+      float total_cons = 0.0;
+
+      if (std::isfinite(cons_heat) && cons_heat > 0.1 && std::isfinite(prod_heat) && prod_heat > 0.1) {
+        total_prod += prod_heat;
+        total_cons += cons_heat;
+      }
+      if (std::isfinite(cons_dhw) && cons_dhw > 0.1 && std::isfinite(prod_dhw) && prod_dhw > 0.1) {
+        total_prod += prod_dhw;
+        total_cons += cons_dhw;
+      }
+
+      if (total_cons <= 0.0) return NAN;
+      return total_prod / total_cons;
+    state_class: measurement
+    accuracy_decimals: 2
 
 switch:
   - platform: ecodan
@@ -123,11 +190,26 @@ switch:
       name: Force DHW
     holiday_mode:
       name: Holiday Mode
+    prohibit_dhw:
+      name: Prohibit DHW
+    prohibit_heating_zone1:
+      name: Prohibit heating Zone 1
+    prohibit_cooling_zone1:
+      name: Prohibit cooling Zone 1
+    prohibit_heating_zone2:
+      name: Prohibit heating Zone 2
+    prohibit_cooling_zone2:
+      name: Prohibit cooling Zone 2
 
 select:
   - platform: ecodan
-    mode_select:
-      name: Mode
+    # Legacy single key (maps to zone1). Prefer using zone specific keys below.
+    # mode_select:
+    #   name: Mode
+    mode_select_zone1:
+      name: Mode Zone 1
+    mode_select_zone2:
+      name: Mode Zone 2
     hot_water_mode:
       name: Hot water mode
 
@@ -135,7 +217,19 @@ number:
   - platform: ecodan
     hot_water_setpoint:
       name: Hot water setpoint
-    zone1_room_temp_setpoint:
-      name: Room temperature setpoint
     zone1_flow_temp_setpoint:
-      name: Flow temperature setpoint
+      name: Zone 1 Flow temperature setpoint
+    zone2_flow_temp_setpoint:
+      name: Zone 2 Flow temperature setpoint
+    # zone1_room_temp_setpoint:
+    #   name: Zone 1 Room temperature setpoint
+    # zone2_room_temp_setpoint:
+    #   name: Zone 2 Room temperature setpoint
+
+# Climate entities for zone temperature control (alternative to number entities above)
+climate:
+  - platform: ecodan
+    zone1:
+      name: "Zone 1 Thermostat"
+    zone2:
+      name: "Zone 2 Thermostat"

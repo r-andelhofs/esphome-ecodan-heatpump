@@ -53,7 +53,7 @@ DEFINE_FIELD(hot_water_max_temp_drop, 0x09, 16, VarType_DECVALUE);
 DEFINE_FIELD(hot_water_temp_range_max, 0x09, 17, VarType_ONE_BYTE_TEMPERATURE_20);
 DEFINE_FIELD(hot_water_temp_range_min, 0x09, 18, VarType_ONE_BYTE_TEMPERATURE_20);
 DEFINE_FIELD(zone1_room_temperature, 0x0b, 6, VarType_TEMPERATURE);
-DEFINE_FIELD(zone2_room_temperature, 0x0b, 12, VarType_TEMPERATURE);
+DEFINE_FIELD(zone2_room_temperature, 0x0b, 8, VarType_TEMPERATURE);
 DEFINE_FIELD(gas_return_temperature, 0x0b, 13, VarType_TEMPERATURE);
 DEFINE_FIELD(gas_return_temp_signed, 0x0b, 15, VarType_ONE_BYTE_TEMPERATURE);
 DEFINE_FIELD(outside_temperature, 0x0b, 16, VarType_ONE_BYTE_TEMPERATURE);
@@ -65,6 +65,9 @@ DEFINE_FIELD(hot_water_temperature, 0x0c, 12, VarType_TEMPERATURE);
 DEFINE_FIELD(boiler_flow_temperature, 0x0d, 6, VarType_TEMPERATURE);
 DEFINE_FIELD(boiler_return_temperature, 0x0d, 9, VarType_TEMPERATURE);
 DEFINE_FIELD(runtime, 0x13, 8, VarType_RUNTIME);
+// zone_activity_status is using 0x03 index 13, which is undocumented.
+// It seems to behave as the documented index 8 (3 = Z2 heating, 2 = Z1 heating, 1 = Both Zones heating, 0 = Idle)
+DEFINE_FIELD(zone_activity_status, 0x03, 13, VarType_DECVALUE);
 DEFINE_FIELD(water_flow, 0x14, 17, VarType_DECVALUE);
 DEFINE_FIELD(hot_water_setpoint, 0x26, 13, VarType_TEMPERATURE);
 DEFINE_FIELD(zone1_flow_temp_setpoint2, 0x26, 15, VarType_TEMPERATURE);
@@ -86,6 +89,8 @@ DEFINE_FIELD(heating_stage, 0x07, 9, VarType_HEAT_STAGE);
 DEFINE_FIELD(operating_mode, 0x26, 9, VarType_OPERATING_MODE);
 DEFINE_FIELD(hot_water_mode, 0x26, 10, VarType_HW_MODE);
 DEFINE_FIELD(mode_select, 0x26, 11, VarType_MODE_SETTING);
+DEFINE_FIELD(mode_select_zone1, 0x26, 11, VarType_MODE_SETTING);
+DEFINE_FIELD(mode_select_zone2, 0x26, 12, VarType_MODE_SETTING);
 DEFINE_FIELD(heat_cool, 0x26, 12, VarType_HEAT_COOL);
 DEFINE_FIELD(hot_water_timer, 0x28, 10, VarType_ON_OFF);
 DEFINE_FIELD(date_energy_cons, 0xA1, 6, VarType_DATE);
@@ -95,6 +100,14 @@ DEFINE_FIELD(holiday_mode, 0x28, 9, VarType_ON_OFF);
 // Boolean fields
 DEFINE_FIELD(power_state, 0x26, 8, VarType_ON_OFF);
 DEFINE_FIELD(force_dhw, 0x05, 12, VarType_ON_OFF);
+// Prohibit/inhibit flags read from 0x28. Indices anchored to the known-good
+// holiday_mode (0x28 idx 9); the protocol lists these consecutively after it
+// (Prohibit DHW, Heat Z1, Cool Z1, Heat Z2, Cool Z2). VERIFY ON HARDWARE.
+DEFINE_FIELD(prohibit_dhw, 0x28, 10, VarType_ON_OFF);
+DEFINE_FIELD(prohibit_heating_zone1, 0x28, 11, VarType_ON_OFF);
+DEFINE_FIELD(prohibit_cooling_zone1, 0x28, 12, VarType_ON_OFF);
+DEFINE_FIELD(prohibit_heating_zone2, 0x28, 13, VarType_ON_OFF);
+DEFINE_FIELD(prohibit_cooling_zone2, 0x28, 14, VarType_ON_OFF);
 } // namespace fields
 } // namespace ecodan
 

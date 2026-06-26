@@ -51,7 +51,7 @@ CONFIG_SCHEMA = cv.Schema(
         ),
         cv.Optional("zone2_room_temperature"): sensor.sensor_schema(
             unit_of_measurement=UNIT_CELSIUS,
-            icon="mdi:home-thermometer",
+            icon="mdi:home-thermometer-outline",
             accuracy_decimals=1,
             device_class=DEVICE_CLASS_TEMPERATURE,
             state_class=STATE_CLASS_MEASUREMENT,
@@ -91,11 +91,39 @@ CONFIG_SCHEMA = cv.Schema(
             device_class=DEVICE_CLASS_TEMPERATURE,
             state_class=STATE_CLASS_MEASUREMENT,
         ),
+        cv.Optional("legionella_temp_setpoint"): sensor.sensor_schema(
+            unit_of_measurement=UNIT_CELSIUS,
+            icon="mdi:bacteria",
+            accuracy_decimals=1,
+            device_class=DEVICE_CLASS_TEMPERATURE,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional("hot_water_temp_range_max"): sensor.sensor_schema(
+            unit_of_measurement=UNIT_CELSIUS,
+            icon="mdi:thermometer-chevron-up",
+            accuracy_decimals=1,
+            device_class=DEVICE_CLASS_TEMPERATURE,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional("hot_water_temp_range_min"): sensor.sensor_schema(
+            unit_of_measurement=UNIT_CELSIUS,
+            icon="mdi:thermometer-chevron-down",
+            accuracy_decimals=1,
+            device_class=DEVICE_CLASS_TEMPERATURE,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
         cv.Optional("runtime"): sensor.sensor_schema(
             unit_of_measurement=UNIT_HOUR,
             icon="mdi:clock",
             entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
         ),
+        
+        # Zone activity status sensor (shows which zones are active)
+        cv.Optional("zone_activity_status"): sensor.sensor_schema(
+            icon="mdi:home-thermometer",
+            entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+        ),
+        
         cv.Optional("water_flow"): sensor.sensor_schema(
             unit_of_measurement="l/m",
             icon="mdi:waves-arrow-right",
