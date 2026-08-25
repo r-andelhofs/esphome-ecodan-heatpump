@@ -331,7 +331,17 @@ int EcodanHeatpump::readPacket(uint8_t *data) {
           data[bytes_read_] = read();
           bytes_read_++;
           if (bytes_read_ == 5) {
-            expected_length_ = data[4] + 5;
+            uint16_t packet_length = data[4] + 5;
+            // A corrupted length byte would make us write past receive_buffer_ (the
+            // checksum lands at data[packet_length]), so resync instead.
+            if (packet_length >= PACKET_BUFFER_SIZE) {
+              ESP_LOGW(TAG, "Bogus length byte 0x%02x, resyncing", data[4]);
+              read_state_ = 0;
+              bytes_read_ = 0;
+              expected_length_ = 0;
+              break;
+            }
+            expected_length_ = packet_length;
             read_state_ = 2;
             ESP_LOGV(TAG, "Read header, expecting %d total bytes", expected_length_ + 1);
           }
@@ -352,7 +362,10 @@ int EcodanHeatpump::readPacket(uint8_t *data) {
               read_state_ = 0;
               bytes_read_ = 0;
               expected_length_ = 0;
-              
+
+              // Any valid packet proves the serial link is alive
+              consecutive_read_timeouts_ = 0;
+
               ESP_LOGV(TAG, "Received packet: type=0x%02x, address=0x%02x", data[1], data[5]);
               
               if (data[1] == 0x7a) {
@@ -853,8 +866,19 @@ void EcodanHeatpump::handleWaitingForOperationResponse() {
       waiting_for_response_ = false;
       current_entity_index_++;
       last_read_time_ = now;
+
+      // The heat pump can drop the connection (or the serial link can fail) without
+      // us ever seeing an error: reads just keep timing out and every entity holds
+      // its last value forever. Re-run the handshake once enough reads in a row have
+      // gone unanswered.
+      consecutive_read_timeouts_++;
+      size_t entities_per_cycle = entity_list_.empty() ? 1 : entity_list_.size();
+      if (consecutive_read_timeouts_ >= entities_per_cycle * LINK_LOST_CYCLES) {
+        resetLink();
+        return;
+      }
     }
-    
+
     state_ = ComponentState::READING_ENTITIES;
     return;
   }
@@ -867,6 +891,28 @@ void EcodanHeatpump::handleWaitingForOperationResponse() {
     // Just make sure we transition back to reading
     state_ = ComponentState::READING_ENTITIES;
   }
+}
+
+void EcodanHeatpump::resetLink() {
+  ESP_LOGW(TAG, "No valid reply from heat pump in %u read attempts, re-running handshake",
+           consecutive_read_timeouts_);
+
+  isInitialized = false;
+  init_retry_count_ = 0;
+  consecutive_read_timeouts_ = 0;
+
+  // Drop any half-read packet and any queued/in-flight operation
+  read_state_ = 0;
+  bytes_read_ = 0;
+  expected_length_ = 0;
+  pending_operation_.is_pending = false;
+  operation_in_progress_ = false;
+  waiting_for_response_ = false;
+  current_entity_index_ = 0;
+
+  // Send the connect sequence on the next loop() instead of waiting a retry interval
+  last_command_time_ = millis() - INIT_RETRY_INTERVAL_MS - 1;
+  state_ = ComponentState::INITIALIZING;
 }
 
 bool EcodanHeatpump::isTimeToReadNext() {

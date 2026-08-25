@@ -28,6 +28,7 @@
 #define MAX_INIT_RETRIES 10 // Maximum initialization attempts
 #define INIT_RETRY_DELAY_MS 1000 // Delay between init retries
 #define INIT_RETRY_INTERVAL_MS 2000 // Interval between initialization attempts
+#define LINK_LOST_CYCLES 3 // Re-run the handshake after this many consecutive read cycles without a single valid reply
 
 // Temperature limits for validation
 #define MIN_TEMPERATURE 10.0f // Minimum temperature in °C
@@ -232,6 +233,7 @@ class EcodanHeatpump : public PollingComponent, public uart::UARTDevice {
     uint8_t pending_address_ = 0;
     bool waiting_for_response_ = false;
     uint8_t init_retry_count_ = 0;
+    uint16_t consecutive_read_timeouts_ = 0; // Reset by any valid packet from the heat pump
     
     // Packet reading state variables (converted from static to instance variables)
     uint8_t read_state_ = 0; // 0: looking for start, 1: reading header, 2: reading payload
@@ -278,6 +280,7 @@ class EcodanHeatpump : public PollingComponent, public uart::UARTDevice {
     void handleSendingOperation();
     void handleWaitingForOperationResponse();
     bool isTimeToReadNext();
+    void resetLink();
     void queueCommand(uint8_t *commandBuffer);
     void queueSensorRead(uint8_t *readBuffer, uint8_t address);
     void sendQueuedOperation();
