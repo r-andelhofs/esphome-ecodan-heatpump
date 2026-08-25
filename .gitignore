@@ -52,3 +52,7 @@ Mkfile.old
 dkms.conf
 
 .idea/
+
+# Python bytecode (ESPHome codegen modules)
+__pycache__/
+*.py[cod]
