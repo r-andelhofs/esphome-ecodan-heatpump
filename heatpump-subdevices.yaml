@@ -98,11 +98,6 @@ text_sensor:
     holiday_mode:
       name: Holiday mode
   
-  # Hot water specific text sensors
-  - platform: ecodan
-    hot_water_timer:
-      name: DHW prohibited
-      device_id: hotwater_device
 
 sensor:
   - platform: uptime

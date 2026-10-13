@@ -60,8 +60,6 @@ text_sensor:
       name: Heating stage
     heat_cool:
       name: Heating/cooling
-    hot_water_timer:
-      name: DHW prohibited
     date_energy_cons:
       name: Date energy consumption
     date_energy_prod:
