@@ -45,6 +45,10 @@ CONFIG_SCHEMA = cv.Schema(
             EcodanSwitch,
             icon="mdi:snowflake-off"
         ),
+        cv.Optional("server_control_mode"): switch.switch_schema(
+            EcodanSwitch,
+            icon="mdi:server-network"
+        ),
     }
 ).extend(cv.COMPONENT_SCHEMA)
 

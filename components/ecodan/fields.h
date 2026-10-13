@@ -108,6 +108,7 @@ DEFINE_FIELD(prohibit_heating_zone1, 0x28, 11, VarType_ON_OFF);
 DEFINE_FIELD(prohibit_cooling_zone1, 0x28, 12, VarType_ON_OFF);
 DEFINE_FIELD(prohibit_heating_zone2, 0x28, 13, VarType_ON_OFF);
 DEFINE_FIELD(prohibit_cooling_zone2, 0x28, 14, VarType_ON_OFF);
+DEFINE_FIELD(server_control_mode, 0x28, 15, VarType_ON_OFF);
 } // namespace fields
 } // namespace ecodan
 

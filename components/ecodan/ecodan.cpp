@@ -8,6 +8,7 @@ constexpr uint8_t ecodan::commands::command_prohibit_heating_zone1::packetMask[P
 constexpr uint8_t ecodan::commands::command_prohibit_cooling_zone1::packetMask[PACKET_BUFFER_SIZE];
 constexpr uint8_t ecodan::commands::command_prohibit_heating_zone2::packetMask[PACKET_BUFFER_SIZE];
 constexpr uint8_t ecodan::commands::command_prohibit_cooling_zone2::packetMask[PACKET_BUFFER_SIZE];
+constexpr uint8_t ecodan::commands::command_server_control_mode::packetMask[PACKET_BUFFER_SIZE];
 constexpr uint8_t ecodan::commands::command_mode_select_zone1::packetMask[PACKET_BUFFER_SIZE];
 constexpr uint8_t ecodan::commands::command_mode_select_zone2::packetMask[PACKET_BUFFER_SIZE];
 constexpr uint8_t ecodan::commands::command_hot_water_mode::packetMask[PACKET_BUFFER_SIZE];

@@ -221,6 +221,9 @@ switch:
       name: Prohibit heating Zone 2
     prohibit_cooling_zone2:
       name: Prohibit cooling Zone 2
+    # Prohibit switches only take effect while this is on. Locks the main remote controller.
+    server_control_mode:
+      name: Server control mode
 
 select:
   - platform: ecodan
