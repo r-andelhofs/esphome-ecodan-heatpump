@@ -22,6 +22,13 @@ namespace esphome {
 namespace ecodan_ {
 
 static const char *TAG = "ecodan";
+// Raw wire traffic, own tag so it can be silenced via `logger: logs: ecodan.raw: INFO`
+static const char *RAW_TAG = "ecodan.raw";
+
+static void logRawPacket(const char *dir, const uint8_t *data, size_t len) {
+  char hex[format_hex_pretty_size(PACKET_BUFFER_SIZE)];
+  ESP_LOGD(RAW_TAG, "%s %s", dir, format_hex_pretty_to(hex, data, len));
+}
 
 void EcodanSwitch::dump_config() {
   LOG_SWITCH("", "Ecodan Switch", this);
@@ -358,6 +365,7 @@ int EcodanHeatpump::readPacket(uint8_t *data) {
             uint8_t checksum = calculateCheckSum(data);
             
             if (data[expected_length_] == checksum) {
+              logRawPacket("RX", data, expected_length_ + 1);
               // Reset state for next packet
               read_state_ = 0;
               bytes_read_ = 0;
@@ -967,10 +975,8 @@ void EcodanHeatpump::sendQueuedOperation() {
   packetLength = pending_operation_.buffer[4] + 5;
   pending_operation_.buffer[packetLength] = checkSum;
   
-  if (pending_operation_.is_user_command) {
-    ESP_LOGV(TAG, "Sending user command");
-  }
-  
+  logRawPacket(pending_operation_.is_user_command ? "TX cmd" : "TX read", pending_operation_.buffer, packetLength + 1);
+
   for (i = 0; i <= packetLength; i++) {
     write(pending_operation_.buffer[i]);
   }
