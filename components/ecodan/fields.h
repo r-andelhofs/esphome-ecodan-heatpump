@@ -92,6 +92,9 @@ DEFINE_FIELD(mode_select, 0x26, 11, VarType_MODE_SETTING);
 DEFINE_FIELD(mode_select_zone1, 0x26, 11, VarType_MODE_SETTING);
 DEFINE_FIELD(mode_select_zone2, 0x26, 12, VarType_MODE_SETTING);
 DEFINE_FIELD(heat_cool, 0x26, 12, VarType_HEAT_COOL);
+// Not a timer setting: this is the prohibit-DHW flag (same byte as the
+// prohibit_dhw switch). The FTC timer appears to drive it (observed for heating).
+// Key kept for config compatibility.
 DEFINE_FIELD(hot_water_timer, 0x28, 10, VarType_ON_OFF);
 DEFINE_FIELD(date_energy_cons, 0xA1, 6, VarType_DATE);
 DEFINE_FIELD(date_energy_prod, 0xA2, 6, VarType_DATE);

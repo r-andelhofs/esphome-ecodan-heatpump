@@ -101,7 +101,7 @@ text_sensor:
   # Hot water specific text sensors
   - platform: ecodan
     hot_water_timer:
-      name: Hot water timer
+      name: DHW prohibited
       device_id: hotwater_device
 
 sensor:
