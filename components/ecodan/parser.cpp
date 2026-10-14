@@ -209,7 +209,7 @@ string parsePacketTextItem(uint8_t *packet, varTypeEnum varType, uint8_t index) 
 
 // Boolean functions
 static bool parseOnOff(uint8_t *packet, uint8_t index) {
-  return packet[index] == 1;
+  return packet[index] != 0;
 }
 
 bool parsePacketBoolItem(uint8_t *packet, varTypeEnum varType, uint8_t index) {

@@ -115,7 +115,7 @@ sensor:
     output_power:
       name: Output power
     gas_return_temp_signed:
-      name: Gas return temperature
+      name: Refrigerant liquid temperature
     outside_temperature:
       name: Outside temperature
     water_feed_temp_signed:
@@ -144,11 +144,23 @@ sensor:
     zone1_room_temperature:
       name: Room temperature
       device_id: zone1_device
+    zone1_flow_temperature:
+      name: Flow temperature
+      device_id: zone1_device
+    zone1_return_temperature:
+      name: Return temperature
+      device_id: zone1_device
   
   # Zone 2 specific sensors
   - platform: ecodan
     zone2_room_temperature:
       name: Room temperature
+      device_id: zone2_device
+    zone2_flow_temperature:
+      name: Flow temperature
+      device_id: zone2_device
+    zone2_return_temperature:
+      name: Return temperature
       device_id: zone2_device
   
   # Hot water specific sensors
@@ -221,6 +233,25 @@ sensor:
       return total_prod / total_cons;
     state_class: measurement
     accuracy_decimals: 2
+
+binary_sensor:
+  - platform: ecodan
+    compressor:
+      name: Compressor
+    booster_heater:
+      name: Booster heater
+    booster_heater_2:
+      name: Booster heater 2
+    immersion_heater:
+      name: Immersion heater
+    water_pump_1:
+      name: Water pump 1
+    water_pump_2:
+      name: Water pump 2
+    water_pump_3:
+      name: Water pump 3
+    three_way_valve:
+      name: Three-way valve
 
 switch:
   # Heat pump general switches

@@ -442,6 +442,8 @@ void EcodanHeatpump::parsePacket(uint8_t *packet) {
   ECODAN_SENSOR_LIST(ECODAN_PUBLISH_SENSOR, )
 #define ECODAN_PUBLISH_TEXT_SENSOR(p_ts) ECODAN_PUBLISH_ENTITY(p_ts, ts, parsePacketTextItem)
   ECODAN_TEXT_SENSOR_LIST(ECODAN_PUBLISH_TEXT_SENSOR, )
+#define ECODAN_PUBLISH_BINARY_SENSOR(p_bs) ECODAN_PUBLISH_ENTITY(p_bs, bs, parsePacketBoolItem)
+  ECODAN_BINARY_SENSOR_LIST(ECODAN_PUBLISH_BINARY_SENSOR, )
 #define ECODAN_PUBLISH_SWITCH(p_sw) ECODAN_PUBLISH_ENTITY(p_sw, sw, parsePacketBoolItem)
   ECODAN_SWITCH_LIST(ECODAN_PUBLISH_SWITCH, )
 #define ECODAN_PUBLISH_SELECT(p_sl) ECODAN_PUBLISH_ENTITY(p_sl, sl, parsePacketTextItem)
@@ -591,6 +593,9 @@ void EcodanHeatpump::dump_config() {
 #define ECODAN_LOG_TEXT_SENSOR(ts) LOG_TEXT_SENSOR("  ", #ts, this->ts_##ts##_);
   ECODAN_TEXT_SENSOR_LIST(ECODAN_LOG_TEXT_SENSOR, )
 
+#define ECODAN_LOG_BINARY_SENSOR(bs) LOG_BINARY_SENSOR("  ", #bs, this->bs_##bs##_);
+  ECODAN_BINARY_SENSOR_LIST(ECODAN_LOG_BINARY_SENSOR, )
+
 #define ECODAN_LOG_SWITCH(sw) this->sw_##sw##_->dump_config();
   ECODAN_SWITCH_LIST(ECODAN_LOG_SWITCH, )
 
@@ -687,6 +692,12 @@ void EcodanHeatpump::buildEntityList() {
   }
   ECODAN_NUMBER_LIST(ECODAN_ADD_NUMBER, )
   
+#define ECODAN_ADD_BINARY_SENSOR(bs) \
+  if (this->bs_##bs##_ != nullptr) { \
+    addEntityIfNotPresent(field_##bs::address, "bs", #bs); \
+  }
+  ECODAN_BINARY_SENSOR_LIST(ECODAN_ADD_BINARY_SENSOR, )
+
   // Add setpoint and temperature readings for climate entities
   if (this->climate_zone1_ != nullptr) {
     addEntityIfNotPresent(field_zone1_room_temp_setpoint::address, "climate", "Zone 1 setpoint reading for climate");

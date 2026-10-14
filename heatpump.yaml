@@ -85,21 +85,29 @@ sensor:
     zone2_room_temperature:
       name: Zone 2 Room temperature
     gas_return_temp_signed:
-      name: Gas return temperature
+      name: Refrigerant liquid temperature
     outside_temperature:
       name: Outside temperature
     water_feed_temp_signed:
       name: Water feed temperature
     water_return_temp_signed:
       name: Water return temperature
+    zone1_flow_temperature:
+      name: Zone 1 Flow temperature
+    zone1_return_temperature:
+      name: Zone 1 Return temperature
+    zone2_flow_temperature:
+      name: Zone 2 Flow temperature
+    zone2_return_temperature:
+      name: Zone 2 Return temperature
     hot_water_temperature:
       name: Hot water temperature
     legionella_temp_setpoint:
       name: Legionella temperature setpoint
     hot_water_temp_range_max:
-      name: Hot water temperature range (max)
+      name: Maximum flow temperature
     hot_water_temp_range_min:
-      name: Hot water temperature range (min)
+      name: Minimum flow temperature
     zone_activity_status:
       name: Zone activity status
     runtime:
@@ -200,6 +208,25 @@ sensor:
       return total_prod / total_cons;
     state_class: measurement
     accuracy_decimals: 2
+
+binary_sensor:
+  - platform: ecodan
+    compressor:
+      name: Compressor
+    booster_heater:
+      name: Booster heater
+    booster_heater_2:
+      name: Booster heater 2
+    immersion_heater:
+      name: Immersion heater
+    water_pump_1:
+      name: Water pump 1
+    water_pump_2:
+      name: Water pump 2
+    water_pump_3:
+      name: Water pump 3
+    three_way_valve:
+      name: Three-way valve
 
 switch:
   - platform: ecodan

@@ -50,10 +50,12 @@ DEFINE_FIELD(zone1_flow_temp_setpoint, 0x09, 10, VarType_TEMPERATURE);
 DEFINE_FIELD(zone2_flow_temp_setpoint, 0x09, 12, VarType_TEMPERATURE);
 DEFINE_FIELD(legionella_temp_setpoint, 0x09, 14, VarType_TEMPERATURE);
 DEFINE_FIELD(hot_water_max_temp_drop, 0x09, 16, VarType_DECVALUE);
+// Despite the keys, 0x09 bytes 17/18 are the max/min flow temperature limits.
 DEFINE_FIELD(hot_water_temp_range_max, 0x09, 17, VarType_ONE_BYTE_TEMPERATURE_20);
 DEFINE_FIELD(hot_water_temp_range_min, 0x09, 18, VarType_ONE_BYTE_TEMPERATURE_20);
 DEFINE_FIELD(zone1_room_temperature, 0x0b, 6, VarType_TEMPERATURE);
 DEFINE_FIELD(zone2_room_temperature, 0x0b, 8, VarType_TEMPERATURE);
+// Despite the keys, 0x0b bytes 13-15 are the refrigerant liquid temperature.
 DEFINE_FIELD(gas_return_temperature, 0x0b, 13, VarType_TEMPERATURE);
 DEFINE_FIELD(gas_return_temp_signed, 0x0b, 15, VarType_ONE_BYTE_TEMPERATURE);
 DEFINE_FIELD(outside_temperature, 0x0b, 16, VarType_ONE_BYTE_TEMPERATURE);
@@ -62,8 +64,11 @@ DEFINE_FIELD(water_feed_temp_signed, 0x0c, 8, VarType_ONE_BYTE_TEMPERATURE);
 DEFINE_FIELD(water_return_temperature, 0x0c, 9, VarType_TEMPERATURE);
 DEFINE_FIELD(water_return_temp_signed, 0x0c, 11, VarType_ONE_BYTE_TEMPERATURE);
 DEFINE_FIELD(hot_water_temperature, 0x0c, 12, VarType_TEMPERATURE);
-DEFINE_FIELD(boiler_flow_temperature, 0x0d, 6, VarType_TEMPERATURE);
-DEFINE_FIELD(boiler_return_temperature, 0x0d, 9, VarType_TEMPERATURE);
+// 0x0d is per-zone flow/return (boiler temps live in 0x0e), per gekkekoe/esphome-ecodan-hp
+DEFINE_FIELD(zone1_flow_temperature, 0x0d, 6, VarType_TEMPERATURE);
+DEFINE_FIELD(zone1_return_temperature, 0x0d, 9, VarType_TEMPERATURE);
+DEFINE_FIELD(zone2_flow_temperature, 0x0d, 12, VarType_TEMPERATURE);
+DEFINE_FIELD(zone2_return_temperature, 0x0d, 15, VarType_TEMPERATURE);
 DEFINE_FIELD(runtime, 0x13, 8, VarType_RUNTIME);
 // zone_activity_status is using 0x03 index 13, which is undocumented.
 // It seems to behave as the documented index 8 (3 = Z2 heating, 2 = Z1 heating, 1 = Both Zones heating, 0 = Idle)
@@ -112,6 +117,15 @@ DEFINE_FIELD(prohibit_cooling_zone1, 0x28, 12, VarType_ON_OFF);
 DEFINE_FIELD(prohibit_heating_zone2, 0x28, 13, VarType_ON_OFF);
 DEFINE_FIELD(prohibit_cooling_zone2, 0x28, 14, VarType_ON_OFF);
 DEFINE_FIELD(server_control_mode, 0x28, 15, VarType_ON_OFF);
+// Binary (non-zero = on), per gekkekoe/esphome-ecodan-hp
+DEFINE_FIELD(compressor, 0x13, 6, VarType_ON_OFF);
+DEFINE_FIELD(booster_heater, 0x14, 7, VarType_ON_OFF);
+DEFINE_FIELD(booster_heater_2, 0x14, 8, VarType_ON_OFF);
+DEFINE_FIELD(immersion_heater, 0x14, 10, VarType_ON_OFF);
+DEFINE_FIELD(water_pump_1, 0x15, 6, VarType_ON_OFF);
+DEFINE_FIELD(water_pump_2, 0x15, 9, VarType_ON_OFF);
+DEFINE_FIELD(water_pump_3, 0x15, 10, VarType_ON_OFF);
+DEFINE_FIELD(three_way_valve, 0x15, 11, VarType_ON_OFF);
 } // namespace fields
 } // namespace ecodan
 
