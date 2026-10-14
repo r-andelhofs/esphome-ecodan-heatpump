@@ -82,17 +82,7 @@ void EcodanNumber::dump_config() {
 }
 
 void EcodanNumber::control(float value) {
-  // Validate temperature range for room temperature setpoints (not legionella or hot water)
-  if (this->key_.find("temp_setpoint") != std::string::npos && 
-      this->key_.find("legionella") == std::string::npos &&
-      this->key_.find("hot_water") == std::string::npos) {
-    if (value < MIN_TEMPERATURE || value > MAX_TEMPERATURE) {
-      ESP_LOGW(TAG, "Temperature %.1f°C out of range [%.1f-%.1f°C], ignoring", 
-               value, MIN_TEMPERATURE, MAX_TEMPERATURE);
-      return;
-    }
-  }
-  
+  // Range is enforced by the number traits (min/max per key in number.py).
   uint8_t sendBuffer[PACKET_BUFFER_SIZE], temp1, temp2;
   uint16_t temperature = value * 100;
   temp1 = (uint8_t) (temperature >> 8);
