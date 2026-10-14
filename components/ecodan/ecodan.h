@@ -16,6 +16,8 @@
 #include "fields.h"
 #include <cmath>
 #include "parser.h"
+#include <array>
+#include <deque>
 #include <string>
 #include <vector>
 #define CONNECT_LEN 8
@@ -29,6 +31,7 @@
 #define MAX_INIT_RETRIES 10 // Maximum initialization attempts
 #define INIT_RETRY_DELAY_MS 1000 // Delay between init retries
 #define INIT_RETRY_INTERVAL_MS 2000 // Interval between initialization attempts
+#define MAX_QUEUED_COMMANDS 8 // User commands waiting for the single send slot; oldest dropped beyond this
 #define LINK_LOST_CYCLES 3 // Re-run the handshake after this many consecutive read cycles without a single valid reply
 
 // Temperature limits for validation
@@ -260,6 +263,9 @@ class EcodanHeatpump : public PollingComponent, public uart::UARTDevice {
     };
     
     PendingOperation pending_operation_;
+    // User commands wait here so back-to-back writes are sent in order instead of
+    // overwriting each other in pending_operation_.
+    std::deque<std::array<uint8_t, PACKET_BUFFER_SIZE>> command_queue_;
     bool operation_in_progress_ = false;
     
     // Entity tracking

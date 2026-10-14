@@ -219,14 +219,17 @@ binary_sensor:
       name: Booster heater 2
     immersion_heater:
       name: Immersion heater
+    # Pump numbering is Mitsubishi's; roles below verified on this install
+    # (pump 2 runs with Zone 1, pump 3 with Zone 2). Adjust names for yours.
     water_pump_1:
-      name: Water pump 1
+      name: Primary pump
     water_pump_2:
-      name: Water pump 2
+      name: Zone 1 pump
     water_pump_3:
-      name: Water pump 3
+      name: Zone 2 pump
+    # ON = diverted to the hot water tank
     three_way_valve:
-      name: Three-way valve
+      name: Hot water valve
 
 switch:
   - platform: ecodan

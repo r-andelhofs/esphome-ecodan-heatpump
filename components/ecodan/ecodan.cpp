@@ -722,6 +722,16 @@ void EcodanHeatpump::processStateMachine() {
   
   // Always check for incoming packets
   receiveSerialPacket();
+
+  // Move the next user command into the send slot once no other user command holds it.
+  // An unsent sensor read may be displaced; handleReading() re-queues it.
+  if (!command_queue_.empty() && !(pending_operation_.is_pending && pending_operation_.is_user_command)) {
+    memcpy(pending_operation_.buffer, command_queue_.front().data(), PACKET_BUFFER_SIZE);
+    command_queue_.pop_front();
+    pending_operation_.is_pending = true;
+    pending_operation_.is_user_command = true;
+    pending_operation_.queued_time = now;
+  }
   
   // Allow other tasks to run (watchdog-friendly)
   delayMicroseconds(1);
@@ -916,6 +926,7 @@ void EcodanHeatpump::resetLink() {
   bytes_read_ = 0;
   expected_length_ = 0;
   pending_operation_.is_pending = false;
+  command_queue_.clear();
   operation_in_progress_ = false;
   waiting_for_response_ = false;
   current_entity_index_ = 0;
@@ -937,16 +948,16 @@ void EcodanHeatpump::queueCommand(uint8_t *commandBuffer) {
     return;
   }
   
-  if (pending_operation_.is_pending) {
-    ESP_LOGV(TAG, "Replacing pending operation with new user command");
+  if (command_queue_.size() >= MAX_QUEUED_COMMANDS) {
+    ESP_LOGW(TAG, "Command queue full, dropping oldest command");
+    command_queue_.pop_front();
   }
-  
-  memcpy(pending_operation_.buffer, commandBuffer, PACKET_BUFFER_SIZE);
-  pending_operation_.is_pending = true;
-  pending_operation_.is_user_command = true;
-  pending_operation_.queued_time = millis();
-  
-  ESP_LOGV(TAG, "User command queued");
+
+  std::array<uint8_t, PACKET_BUFFER_SIZE> command;
+  memcpy(command.data(), commandBuffer, PACKET_BUFFER_SIZE);
+  command_queue_.push_back(command);
+
+  ESP_LOGV(TAG, "User command queued (%u waiting)", (unsigned) command_queue_.size());
 }
 
 void EcodanHeatpump::queueSensorRead(uint8_t *readBuffer, uint8_t address) {
