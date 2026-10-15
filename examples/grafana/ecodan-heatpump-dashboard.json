@@ -111,7 +111,18 @@
             "uid": "${DS}"
           },
           "expr": "hass_sensor_temperature_celsius{entity=\"sensor.heatpump_outside_temperature\"}",
-          "legendFormat": "Outside",
+          "legendFormat": "Heat pump",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          },
+          "expr": "hass_sensor_temperature_celsius{entity=\"sensor.forecast_met_no_outdoor_temperature\"}",
+          "legendFormat": "Met.no",
           "instant": false,
           "range": true
         }
@@ -145,7 +156,7 @@
         },
         "colorMode": "value",
         "graphMode": "area",
-        "textMode": "auto",
+        "textMode": "value_and_name",
         "justifyMode": "auto",
         "orientation": "auto"
       }
@@ -1700,7 +1711,7 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 27
       },
@@ -1746,6 +1757,116 @@
           "sort": "none"
         }
       }
+    },
+    {
+      "id": 36,
+      "type": "timeseries",
+      "title": "Outdoor: heat pump sensor vs Met.no",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          },
+          "expr": "hass_sensor_temperature_celsius{entity=\"sensor.heatpump_outside_temperature\"}",
+          "legendFormat": "Heat pump sensor",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          },
+          "expr": "hass_sensor_temperature_celsius{entity=\"sensor.forecast_met_no_outdoor_temperature\"}",
+          "legendFormat": "Met.no",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          },
+          "expr": "max(hass_sensor_temperature_celsius{entity=\"sensor.heatpump_outside_temperature\"}) - max(hass_sensor_temperature_celsius{entity=\"sensor.forecast_met_no_outdoor_temperature\"})",
+          "legendFormat": "Difference (heat pump \u2212 Met.no)",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineInterpolation": "linear",
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Difference (heat pump \u2212 Met.no)"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "The heat pump's outdoor sensor sits on the outdoor unit (sun, defrost air). Met.no is the forecast_home weather entity via the 'Met.no outdoor temperature' template sensor."
     },
     {
       "id": 20,
