@@ -53,13 +53,13 @@ text_sensor:
       name: BSSID
   - platform: ecodan
     date_time:
-      name: Current date/time
+      name: Current date time
     defrost:
       name: Defrost
     heating_stage:
       name: Heating stage
     heat_cool:
-      name: Heating/cooling
+      name: Heating cooling
     date_energy_cons:
       name: Date energy consumption
     date_energy_prod:

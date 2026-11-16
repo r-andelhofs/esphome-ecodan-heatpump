@@ -82,7 +82,7 @@ text_sensor:
   # Heat pump general status sensors
   - platform: ecodan
     date_time:
-      name: Current date/time
+      name: Current date time
     defrost:
       name: Defrost
     heating_stage:
@@ -90,7 +90,7 @@ text_sensor:
     operating_mode:
       name: Operating mode
     heat_cool:
-      name: Heating/cooling
+      name: Heating cooling
     date_energy_cons:
       name: Date energy consumption
     date_energy_prod:
