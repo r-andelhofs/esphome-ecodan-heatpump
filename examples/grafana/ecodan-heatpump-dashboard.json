@@ -556,6 +556,16 @@
                   "text": "Cooling",
                   "color": "blue",
                   "index": 3
+                },
+                "5": {
+                  "text": "Frost protection",
+                  "color": "light-blue",
+                  "index": 4
+                },
+                "6": {
+                  "text": "Legionella",
+                  "color": "purple",
+                  "index": 5
                 }
               }
             }
@@ -2355,6 +2365,16 @@
                   "text": "Cooling",
                   "color": "blue",
                   "index": 3
+                },
+                "5": {
+                  "text": "Frost protection",
+                  "color": "light-blue",
+                  "index": 4
+                },
+                "6": {
+                  "text": "Legionella",
+                  "color": "purple",
+                  "index": 5
                 }
               }
             }
@@ -2508,7 +2528,7 @@
     {
       "id": 25,
       "type": "timeseries",
-      "title": "Output power, frequency and flow",
+      "title": "Output power, frequency, flow and pump speed",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS}"
@@ -2550,6 +2570,17 @@
           },
           "expr": "hass_sensor_unit_l_per_m{entity=\"sensor.heatpump_water_flow\"}",
           "legendFormat": "Water flow",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          },
+          "expr": "hass_sensor_state{entity=\"sensor.system_ecodan_heatpump_primary_pump_speed\"}",
+          "legendFormat": "Primary pump speed",
           "instant": false,
           "range": true
         }
@@ -2606,6 +2637,42 @@
                 "value": 0
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Primary pump speed"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Pump speed (0 = off)"
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "stepAfter"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 5
+              }
+            ]
           }
         ]
       },
@@ -2619,7 +2686,8 @@
           "mode": "multi",
           "sort": "none"
         }
-      }
+      },
+      "description": "Primary pump speed is the FTC service-menu setting (1-5, 0 = pump off), decoded from the pump PWM duty."
     },
     {
       "id": 28,
@@ -3046,6 +3114,157 @@
       "panels": []
     },
     {
+      "id": 37,
+      "type": "stat",
+      "title": "Last legionella cycle",
+      "description": "Days since the heat pump last reported operating mode 6 (legionella prevention). Looks back 30 days.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 70
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          },
+          "expr": "(time() - tlast_over_time((hass_sensor_state{entity=\"sensor.heatpump_operating_mode_2\"} == 6)[30d:2m])) / 86400 or on() vector(-1)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "d",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 8
+              },
+              {
+                "color": "red",
+                "value": 15
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "None in 30 d",
+                  "color": "red",
+                  "index": 0
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 38,
+      "type": "stat",
+      "title": "Tank peak (7 d)",
+      "description": "Highest DHW tank temperature in the last 7 days. A working legionella cycle pushes this to the setpoint. Thresholds assume a 60 \u00b0C setpoint; adjust them if yours differs.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 74
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          },
+          "expr": "max_over_time(hass_sensor_temperature_celsius{entity=\"sensor.heatpump_hot_water_temperature\"}[7d])",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 55
+              },
+              {
+                "color": "green",
+                "value": 60
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
       "id": 35,
       "type": "timeseries",
       "title": "DHW tank temperature",
@@ -3055,8 +3274,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
-        "x": 0,
+        "w": 20,
+        "x": 4,
         "y": 70
       },
       "targets": [
