@@ -157,6 +157,18 @@ CONFIG_SCHEMA = cv.Schema(
             icon="mdi:waves-arrow-right",
             state_class=STATE_CLASS_MEASUREMENT,
         ),
+        cv.Optional("pump_speed"): sensor.sensor_schema(
+            icon="mdi:pump",
+            accuracy_decimals=0,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional("pump_pwm"): sensor.sensor_schema(
+            unit_of_measurement="%",
+            icon="mdi:pulse",
+            accuracy_decimals=0,
+            entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
         cv.Optional("operating_mode"): sensor.sensor_schema(
             icon="mdi:numeric",
             state_class=STATE_CLASS_MEASUREMENT,

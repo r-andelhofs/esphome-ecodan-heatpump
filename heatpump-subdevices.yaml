@@ -126,6 +126,10 @@ sensor:
       name: Runtime
     water_flow:
       name: Water flow
+    pump_speed:
+      name: Primary pump speed
+    pump_pwm:
+      name: Primary pump PWM
     energy_consumed_increasing:
       name: Total energy consumed
     energy_cons_yesterday:

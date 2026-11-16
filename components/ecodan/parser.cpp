@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <cmath>
 
 using std::string;
 
@@ -38,6 +39,27 @@ static float parse2ByteHexValue(uint8_t *packet, uint8_t index) {
   return (float) (packet[index] * 256 + packet[index + 1]);
 }
 
+// PWM duty -> service-menu pump speed. Values observed upstream on a Grundfos
+// UPM; another pump may use other duties, which then read as NAN (check pump_pwm).
+static float parsePumpSpeed(uint8_t *packet, uint8_t index) {
+  switch (packet[index]) {
+  case 100:
+    return 0;  // pump off
+  case 52:
+    return 1;
+  case 41:
+    return 2;
+  case 31:
+    return 3;
+  case 20:
+    return 4;
+  case 0:
+    return 5;
+  default:
+    return NAN;
+  }
+}
+
 static float parseOperatingMode(uint8_t *packet, uint8_t index) {
   return (float) packet[index];
 }
@@ -73,6 +95,9 @@ float parsePacketNumberItem(uint8_t *packet, varTypeEnum varType, uint8_t index)
     break;
   case VarType_2BYTEHEXVALUE:
     return parse2ByteHexValue(packet, index);
+    break;
+  case VarType_PUMP_SPEED:
+    return parsePumpSpeed(packet, index);
     break;
   default:
     return -1;

@@ -28,6 +28,7 @@ enum varTypeEnum {
   VarType_ON_OFF,
   VarType_HEAT_STAGE,
   VarType_TOTAL_ENERGY,
+  VarType_PUMP_SPEED,
 };
 
 namespace fields {
@@ -74,6 +75,10 @@ DEFINE_FIELD(runtime, 0x13, 8, VarType_RUNTIME);
 // It seems to behave as the documented index 8 (3 = Z2 heating, 2 = Z1 heating, 1 = Both Zones heating, 0 = Idle)
 DEFINE_FIELD(zone_activity_status, 0x03, 13, VarType_DECVALUE);
 DEFINE_FIELD(water_flow, 0x14, 17, VarType_DECVALUE);
+// Primary pump PWM duty (0x15 byte 7), per gekkekoe/esphome-ecodan-hp. Lower
+// duty = faster pump; pump_speed maps it to the FTC service-menu setting 1-5.
+DEFINE_FIELD(pump_pwm, 0x15, 7, VarType_DECVALUE);
+DEFINE_FIELD(pump_speed, 0x15, 7, VarType_PUMP_SPEED);
 DEFINE_FIELD(hot_water_setpoint, 0x26, 13, VarType_TEMPERATURE);
 DEFINE_FIELD(zone1_flow_temp_setpoint2, 0x26, 15, VarType_TEMPERATURE);
 DEFINE_FIELD(zone2_flow_temp_setpoint2, 0x26, 17, VarType_TEMPERATURE);
